@@ -1,30 +1,28 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupAction,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
 } from "@/components/ui/sidebar";
-import { RedirectToSignIn, SignOutButton } from "@clerk/nextjs";
-import { Authenticated, Unauthenticated, useQuery } from "convex/react";
-import { PlusIcon, User2Icon } from "lucide-react";
+import { SignOutButton } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
+import { User2Icon } from "lucide-react";
 import Link from "next/link";
-import { api } from "../../../../convex/_generated/api";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { NewDirectMessage } from "./new-direct-message";
 import { usePathname } from "next/navigation";
+import { api } from "../../../../convex/_generated/api";
+import { NewDirectMessage } from "./new-direct-message";
 
 const useTestDirectMessages = () => {
   const user = useQuery(api.functions.user.get);

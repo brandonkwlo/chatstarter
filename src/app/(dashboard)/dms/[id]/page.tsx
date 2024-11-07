@@ -1,30 +1,29 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
-import { use, useRef, useState } from "react";
-import { api } from "../../../../../convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useMutation, useQuery } from "convex/react";
+import { FunctionReturnType } from "convex/server";
 import {
   LoaderIcon,
-  MoreVertical,
   MoreVerticalIcon,
   PlusIcon,
   SendIcon,
   TrashIcon,
 } from "lucide-react";
-import { Doc, Id } from "../../../../../convex/_generated/dataModel";
-import { FunctionReturnType } from "convex/server";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
 import Image from "next/image";
+import { use, useRef, useState } from "react";
+import { toast } from "sonner";
+import { api } from "../../../../../convex/_generated/api";
+import { Id } from "../../../../../convex/_generated/dataModel";
 
 export default function MessagePage({
   params,
@@ -95,15 +94,27 @@ function MessageItem({ message }: { message: Message }) {
         <p className="text-xs text-muted-foreground">
           {message.sender?.username ?? "Deleted User"}
         </p>
-        <p className="text-sm">{message.content}</p>
-        {message.attachment && (
-          <Image
-            src={message.attachment}
-            alt="Attachment"
-            width={300}
-            height={300}
-            className="rounded border overflow-hidden"
-          />
+        {message.deleted ? (
+          <p className="text-sm text-destructive">
+            {" "}
+            This message was deleted.{" "}
+            {message.deletedReason && (
+              <span> Reason: {message.deletedReason}</span>
+            )}
+          </p>
+        ) : (
+          <>
+            <p className="text-sm">{message.content}</p>
+            {message.attachment && (
+              <Image
+                src={message.attachment}
+                alt="Attachment"
+                width={300}
+                height={300}
+                className="rounded border overflow-hidden"
+              />
+            )}
+          </>
         )}
       </div>
       <MessageActions message={message} />
@@ -148,6 +159,7 @@ function MessageInput({
   const generateUploadUrl = useMutation(
     api.functions.message.generateUploadUrl
   );
+  const removeAttachment = useMutation(api.functions.storage.remove);
   const [attachment, setAttachment] = useState<Id<"_storage">>();
   const [file, setFile] = useState<File>();
   const [isUploading, setIsUploading] = useState(false);
@@ -196,7 +208,22 @@ function MessageInput({
           <span className="sr-only"> Attach </span>
         </Button>
         <div className="flex flex-col flex-1 gap-2">
-          {file && <ImagePreview file={file} isUploading={isUploading} />}
+          {file && (
+            <ImagePreview
+              file={file}
+              isUploading={isUploading}
+              onDelete={() => {
+                if (attachment) {
+                  removeAttachment({ storageId: attachment });
+                }
+                setAttachment(undefined);
+                setFile(undefined);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+              }}
+            />
+          )}
           <Input
             placeholder="Message"
             value={content}
@@ -227,12 +254,14 @@ function MessageInput({
 function ImagePreview({
   file,
   isUploading,
+  onDelete,
 }: {
   file: File;
   isUploading: boolean;
+  onDelete: () => void;
 }) {
   return (
-    <div className="relative size-40 overflow-hidden rounded border">
+    <div className="relative size-40 overflow-hidden rounded border group">
       <Image
         src={URL.createObjectURL(file)}
         alt="Attachment"
@@ -245,6 +274,16 @@ function ImagePreview({
           <LoaderIcon className="animate-spin size-8" />{" "}
         </div>
       )}
+      <Button
+        type="button"
+        className="absolute top-2 right-2 group-hover:opacity-100 opacity-0 transition-opacity"
+        variant="destructive"
+        size="icon"
+        onClick={onDelete}
+      >
+        <TrashIcon />
+        <span className="sr-only">Delete</span>
+      </Button>
     </div>
   );
 }
